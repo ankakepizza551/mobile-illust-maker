@@ -29,7 +29,7 @@ async function handleGenerate(request) {
     return json({ error: "リクエストの形式が不正です" }, 400);
   }
 
-  const { prompt, size, quality, style } = body;
+  const { prompt, size, quality } = body;
   if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
     return json({ error: "プロンプトを入力してください" }, 400);
   }
@@ -41,13 +41,11 @@ async function handleGenerate(request) {
       authorization: auth,
     },
     body: JSON.stringify({
-      model: "dall-e-3",
+      model: "gpt-image-1",
       prompt,
       n: 1,
       size: size || "1024x1024",
-      quality: quality || "standard",
-      style: style || "vivid",
-      response_format: "b64_json",
+      quality: quality || "medium",
     }),
   });
 
@@ -75,6 +73,7 @@ function json(obj, status = 200) {
     headers: { "content-type": "application/json" },
   });
 }
+
 const HTML = `<!doctype html>
 <html lang="ja">
 <head>
@@ -416,24 +415,17 @@ const HTML = `<!doctype html>
       <span class="exposure-label">サイズ</span>
       <div class="dial-options" id="sizeOptions">
         <div class="dial-opt active" data-value="1024x1024">1:1</div>
-        <div class="dial-opt" data-value="1792x1024">横長</div>
-        <div class="dial-opt" data-value="1024x1792">縦長</div>
+        <div class="dial-opt" data-value="1536x1024">横長</div>
+        <div class="dial-opt" data-value="1024x1536">縦長</div>
       </div>
     </div>
 
     <div class="dial-row">
       <span class="exposure-label">画質</span>
       <div class="dial-options" id="qualityOptions">
-        <div class="dial-opt active" data-value="standard">standard</div>
-        <div class="dial-opt" data-value="hd">hd</div>
-      </div>
-    </div>
-
-    <div class="dial-row">
-      <span class="exposure-label">スタイル</span>
-      <div class="dial-options" id="styleOptions">
-        <div class="dial-opt active" data-value="vivid">vivid</div>
-        <div class="dial-opt" data-value="natural">natural</div>
+        <div class="dial-opt" data-value="low">low</div>
+        <div class="dial-opt active" data-value="medium">medium</div>
+        <div class="dial-opt" data-value="high">high</div>
       </div>
     </div>
 
@@ -520,8 +512,7 @@ const HTML = `<!doctype html>
 
   const state = {
     size: '1024x1024',
-    quality: 'standard',
-    style: 'vivid',
+    quality: 'medium',
     items: [],
     activeItem: null,
   };
@@ -552,7 +543,6 @@ const HTML = `<!doctype html>
   }
   setupDials('sizeOptions', 'size');
   setupDials('qualityOptions', 'quality');
-  setupDials('styleOptions', 'style');
 
   function setStatus(msg, isError) {
     el.statusLine.textContent = msg || '';
@@ -578,7 +568,7 @@ const HTML = `<!doctype html>
   function openLightbox(item) {
     state.activeItem = item;
     el.lightboxImg.src = 'data:image/png;base64,' + item.b64;
-    el.lightboxMeta.textContent = item.prompt + ' — ' + item.size + ' / ' + item.quality + ' / ' + item.style;
+    el.lightboxMeta.textContent = item.prompt + ' — ' + item.size + ' / ' + item.quality;
     el.lightbox.classList.add('open');
   }
   document.getElementById('closeLightbox').addEventListener('click', () => {
@@ -638,7 +628,6 @@ const HTML = `<!doctype html>
           prompt,
           size: state.size,
           quality: state.quality,
-          style: state.style,
         }),
       });
       const data = await res.json();
@@ -650,7 +639,6 @@ const HTML = `<!doctype html>
         prompt: data.revisedPrompt || prompt,
         size: state.size,
         quality: state.quality,
-        style: state.style,
         ts: Date.now(),
       };
       await dbAdd(item);
@@ -674,4 +662,4 @@ const HTML = `<!doctype html>
 </script>
 
 </body>
-</html>`
+</html>`;
